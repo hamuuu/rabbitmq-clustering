@@ -1,0 +1,32 @@
+version: '3'
+services:
+  rabbitmq:
+    image: goharbor.spesolution.net/autopayv2/rabbitmq:1.0.0
+    container_name: rbmq-tls-cluster-2
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=my_secret_cookie
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq
+      - RABBITMQ_NODENAME=rabbit@andromeda-playground-server
+      - JOIN_CLUSTER_HOST=rabbit@autopay-alpha-server
+    ports:
+      - "5676:5671"
+      - "15676:15671"
+      - "25672:25672"
+      - "4369:4369"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+      - /etc/hosts:/etc/hosts:ro
+      - /home/faldhi/rabbitmq-clustering/cluster-in-different-machine-without-docker-swarm/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
+    restart: "always"
+    networks:
+      - default
+
+volumes:
+  rabbitmq_data:
+  rabbitmq_logs:
+
+networks:
+  default:
+    driver: bridge

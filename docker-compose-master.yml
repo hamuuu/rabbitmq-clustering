@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: goharbor.spesolution.net/autopayv2/rabbitmq:1.0.0
+    container_name: rbmq-tls-cluster-1-1
+    network_mode: bridge
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=my_secret_cookie
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq
+      - RABBITMQ_NODENAME=rabbit@autopay-alpha-server
+    ports:
+      - "5670:5671"
+      - "15670:15671"
+      - "25672:25672"
+      - "4369:4369"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+      - /etc/hosts:/etc/hosts:ro
+      - ${PWD}/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
+    restart: "always"
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy-rbmq-cluster-1
+    network_mode: bridge
+    ports:
+      - "15675:15672"
+      - "1936:1936"
+      - "5675:5672"
+    volumes:
+      - ${PWD}:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - /etc/hosts:/etc/hosts
+    entrypoint:
+      - docker-entrypoint.sh
+    command:
+      - haproxy
+      - -f
+      - /usr/local/etc/haproxy/haproxy.cfg
+
+volumes:
+  rabbitmq_data:
+  rabbitmq_logs:
